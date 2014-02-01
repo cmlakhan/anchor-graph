@@ -1,2 +1,2 @@
-anchor-_graph
+anchor-graph
 ============
