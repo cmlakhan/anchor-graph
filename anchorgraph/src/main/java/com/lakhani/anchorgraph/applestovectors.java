@@ -6,13 +6,8 @@
 
 package com.lakhani.anchorgraph;
 
-/**
- *
- * @author rmehta
- */
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -22,8 +17,13 @@ import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.NamedVector;
 import org.apache.mahout.math.VectorWritable;
 
-public class anchor_test {
-  public static void main(String args[]) throws Exception {
+/**
+ *
+ * @author rmehta
+ */
+public class applestovectors {
+
+      public static void main(String args[]) throws Exception {
     List<NamedVector> apples = new ArrayList<NamedVector>();
     
     NamedVector apple;
@@ -71,4 +71,7 @@ public class anchor_test {
     }
     reader.close();
   }
+
+    
+    
 }
