@@ -24,6 +24,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.VectorWritable;
 
+
 public class anchorgraph {
     
     public static class Map extends Mapper<LongWritable, Text, Text, VectorWritable> {
@@ -64,7 +65,7 @@ public class anchorgraph {
         
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
-        
+        job.setJarByClass(anchorgraph.class);
         job.waitForCompletion(true);
         
     }

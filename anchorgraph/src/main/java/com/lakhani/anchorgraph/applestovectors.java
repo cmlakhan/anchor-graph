@@ -51,7 +51,7 @@ public class applestovectors {
     Configuration conf = new Configuration();
     FileSystem fs = FileSystem.get(conf);
     
-    Path path = new Path("appledata/apples");
+    Path path = new Path("/user/cloudera/anchorgraph/output");
     SequenceFile.Writer writer = new SequenceFile.Writer(fs, conf,
         path, Text.class, VectorWritable.class);
     VectorWritable vec = new VectorWritable();
