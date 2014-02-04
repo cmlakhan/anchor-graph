@@ -23,9 +23,12 @@ import org.apache.hadoop.fs.Path;
   import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.VectorWritable;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 
 
-public class anchorgraph {
+
+public class anchorgraph extends Configured implements Tool{
     
     public static class Map extends Mapper<LongWritable, Text, Text, VectorWritable> {
         private final static VectorWritable vec = new VectorWritable();
@@ -52,7 +55,7 @@ public class anchorgraph {
 
 
 
-    public static void main(String[] args) throws Exception{
+    public int run(String[] args) throws Exception{
         Configuration conf = new Configuration();
         Job job = new Job(conf, "anchorgraph");
         job.setOutputKeyClass(Text.class);
@@ -66,8 +69,19 @@ public class anchorgraph {
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
         job.setJarByClass(anchorgraph.class);
-        job.waitForCompletion(true);
+        job.submit();
+        
+        int rc = (job.waitForCompletion(true)) ? 1 : 0;
+	return rc;
+
         
     }
 
+    
+      public static void main(String[] args) throws Exception {
+    int res = ToolRunner.run(new Configuration(), new anchorgraph(), args);
+    System.exit(res);
+  }
+
+    
 }
