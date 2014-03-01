@@ -54,6 +54,11 @@
 	<artifactId>mahout-integration</artifactId>
 	<version>0.8</version>
     </dependency>
+        <dependency>
+            <groupId>mahout</groupId>
+            <artifactId>mahout-job</artifactId>
+            <version>1</version>
+        </dependency>
     </dependencies>
 
     
