@@ -57,20 +57,6 @@ public class testCache extends Configured implements Tool{
         //BufferedInputStream bis = new BufferedInputStream;
         
         
-       // public void configure(Job job)
-       // {
-        /**
-        * Read the distributed cache
-        */
-        
-            /*
-        try {
-        localFiles = DistributedCache.getLocalCacheFiles(job.getConfiguration());
-        } catch (IOException e) {
-        e.printStackTrace();
-        }
-            */
-    //}
     
          @Override
         protected void setup(Context context) throws IOException,InterruptedException {
@@ -88,16 +74,11 @@ public class testCache extends Configured implements Tool{
         public void map(LongWritable key, Text value, Mapper.Context context) throws IOException, InterruptedException{
             
             Configuration conf = context.getConfiguration();
+            int NUMFEATURES = Integer.parseInt(conf.get("numberFeatures"));
+            int NUMCENTROIDS = Integer.parseInt(conf.get("numberCentroids"));
 
             
             
-            /*
-                    try {
-        localFiles = DistributedCache.getLocalCacheFiles(conf);
-        } catch (IOException e) {
-        e.printStackTrace();
-        }
-            */
             
             
             
@@ -112,17 +93,33 @@ public class testCache extends Configured implements Tool{
                 //bis = new BufferedInputStream(fis);
             //BufferedReader d = new BufferedReader(new InputStreamReader(bis));
            
-            vec.set(localFiles[0].toString()+"test"); 
+            ArrayRealVector vecParse = lineToVector(line, NUMFEATURES);
+            vec.set(localFiles[0].toString()+"test"+vecParse.toString()); 
             
             context.write(vecID, vec);
         }
+         
+        
+            private ArrayRealVector lineToVector(String line, int NUMFEATURES ){
+            String[] vecArray = line.split(vecSplitter);
             
+            ArrayRealVector dd = new ArrayRealVector();
+            for(int j=0 ; j < NUMFEATURES; j++){
+            dd.append(Double.parseDouble(vecArray[j+1]));   
+            //dd[j]=Double.parseDouble(vecArray[j+1]);    
+           }
+           return dd;  
+        }
+
+        
+        
+        
+        
     }
    
     public int run(String[] args) throws Exception{
         Configuration conf = new Configuration();
-        //DistributedCache.addCacheFile(new URI("hdfs://zphdc1n1:8020/user/clakhani/anchorgraph/centroids.txt"), conf);
-
+        
         Job job = new Job(conf, "testCache");
         job.addCacheFile(new URI("hdfs://zphdc1n1:8020/user/clakhani/anchorgraph/centroids.txt"));
         job.setOutputKeyClass(Text.class);

@@ -11,7 +11,6 @@ package com.lakhani.anchorgraph;
  * @author cmlakhan
  */
 
-import java.util.Arrays;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -19,11 +18,15 @@ import java.io.File;
 import java.io.FileInputStream;
  import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.*;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.math.linear.ArrayRealVector;
+import org.apache.commons.math.linear.RealVector;
 import org.apache.hadoop.conf.*;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
@@ -38,8 +41,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.commons.math.linear.RealVector;
-import org.apache.commons.math.linear.ArrayRealVector;
 
 
 public class anchorgraph extends Configured implements Tool{
@@ -53,27 +54,12 @@ public class anchorgraph extends Configured implements Tool{
         FileInputStream fis = null;
         BufferedInputStream bis = null;
         
-        
-       // public void configure(Job job)
-       // {
-        /**
-        * Read the distributed cache
-        */
-        
-            /*
-        try {
-        localFiles = DistributedCache.getLocalCacheFiles(job.getConfiguration());
-        } catch (IOException e) {
-        e.printStackTrace();
-        }
-            */
-    //}
-    
+      
          @Override
         protected void setup(Context context) throws IOException,InterruptedException {
-        super.setup(context);
+        super.setup(context);   
          //URI[] uris = DistributedCache.getCacheFiles(context.getConfiguration());
-        Path[] localFiles = DistributedCache.getLocalCacheFiles(context.getConfiguration());
+        localFiles = context.getLocalCacheFiles();
     // TODO
     } 
 
@@ -89,23 +75,12 @@ public class anchorgraph extends Configured implements Tool{
             int NUMFEATURES = Integer.parseInt(conf.get("numberFeatures"));
             int NUMCENTROIDS = Integer.parseInt(conf.get("numberCentroids"));
             
-            
-            /*
-                    try {
-        localFiles = DistributedCache.getLocalCacheFiles(conf);
-        } catch (IOException e) {
-        e.printStackTrace();
-        }
-            */
-            
-            
-            
             String line = value.toString();
             String[] vecArray = line.split(vecSplitter);
             vecID.set(vecArray[0]);
             
             ArrayRealVector actualVec = lineToVector(line, NUMFEATURES);
-            ArrayRealVector anchorVector = nearestCentroids(actualVec,NUMFEATURES,NUMCENTROIDS);
+            ArrayRealVector anchorVector = nearestCentroids(actualVec,NUMCENTROIDS,NUMFEATURES);
             
             //vec.set(Arrays.toString(anchorVector.toArray()));
             
@@ -113,7 +88,9 @@ public class anchorgraph extends Configured implements Tool{
                 fis = new FileInputStream(file);
                 bis = new BufferedInputStream(fis);
             BufferedReader d = new BufferedReader(new InputStreamReader(bis));
-           vec.set(localFiles[0].toString()); 
+           
+
+            vec.set(anchorVector.toString()); 
             
             context.write(vecID, vec);
         }
@@ -121,13 +98,16 @@ public class anchorgraph extends Configured implements Tool{
         private ArrayRealVector lineToVector(String line, int NUMFEATURES ){
             String[] vecArray = line.split(vecSplitter);
             
-            ArrayRealVector dd = new ArrayRealVector();
+            double[] dd = new double[NUMFEATURES];
             for(int j=0 ; j < NUMFEATURES; j++){
-            dd.append(Double.parseDouble(vecArray[j+1]));   
-            //dd[j]=Double.parseDouble(vecArray[j+1]);    
+            //dd.append(Double.parseDouble(vecArray[j+1]));   
+            dd[j]=Double.parseDouble(vecArray[j+1]);    
            }
-           return dd;  
+           
+            return new ArrayRealVector(dd);  
         }
+        
+        
         
         private ArrayRealVector nearestCentroids(ArrayRealVector mapperVector, int NUMCENTROIDS, int NUMFEATURES) throws IOException{
            File file = new File(localFiles[0].toString());
@@ -136,33 +116,24 @@ public class anchorgraph extends Configured implements Tool{
     
             BufferedReader d = new BufferedReader(new InputStreamReader(bis));
              //double[] testVector = lineToVector(d.readLine(), NUMFEATURES);
-             ArrayRealVector distanceVector = new ArrayRealVector();
+             double[] distanceVector = new double[NUMCENTROIDS];
              for (int k=0; k < NUMCENTROIDS; k++){
-                 distanceVector.append(mapperVector.getDistance(lineToVector(d.readLine(), NUMFEATURES)));
+                 distanceVector[k]=mapperVector.getDistance(lineToVector(d.readLine(), NUMFEATURES));
              } 
                     
-             return distanceVector;
+             return new ArrayRealVector(distanceVector);
         }
-    
-        /*
-        private double distance(double[] vector1, double[] vector2, int NUMFEATURES){            
-            double dist=0;
-            for(int i=0; i < NUMFEATURES; i++){
-                double partialdist=Math.pow((vector1[i] - vector2[i]),2);
-                dist=dist+partialdist;
-            }
-               return Math.sqrt(dist);        
-        }
-    */
+        
     
     }
    
     public int run(String[] args) throws Exception{
         Configuration conf = new Configuration();
-        DistributedCache.addCacheFile(new URI("hdfs://zphdc1n1:8020/user/clakhani/anchorgraph/centroids.txt"), conf);
+        //DistributedCache.addCacheFile(new URI("hdfs://zphdc1n1:8020/user/clakhani/anchorgraph/centroids.txt"), conf);
         conf.set("numberCentroids", args[3]);
         conf.set("numberFeatures", args[4]);
         Job job = new Job(conf, "anchorgraph");
+        job.addCacheFile(new URI(args[2]));
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);        
         job.setMapperClass(Map.class);
